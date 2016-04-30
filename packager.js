@@ -56,14 +56,12 @@ function bundle(opts) {
     });
 
     // write the minified code
-    const outMinStream = fs.createWriteStream(`${opts.bundle}/${outJsMin}`, 'utf8');
-    outMinStream.write(minified.code);
-    outMinStream.close();
+    const codeStream = fs.createWriteStream(`${opts.bundle}/${outJsMin}`, 'utf8');
+    codeStream.write(minified.code, () => codeStream.end());
 
     // write the minified map code
-    const outMinMapStream = fs.createWriteStream(`${opts.bundle}/${outJsMinMap}`, 'utf8');
-    outMinMapStream.write(minified.map);
-    outMinMapStream.close();
+    const mapStream = fs.createWriteStream(`${opts.bundle}/${outJsMinMap}`, 'utf8');
+    mapStream.write(minified.map, () => mapStream.end());
   }
 
   function buildIndexHtml() {
@@ -75,8 +73,7 @@ function bundle(opts) {
         `<script src=/${outJsMin}></script>\<script src=https://cdn.uxtemple.com/panels.js></script>\n`
       );
 
-    out.write(html);
-    out.end();
+    out.write(html, () => out.end());
   }
 
   function buildPanelsJson() {
