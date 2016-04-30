@@ -33,6 +33,9 @@ const defaultOpts = {
   // port to run the dev server at
   port: 80,
 
+  // expose your own requires for your own use too
+  requires: Object.keys(pkg.dependencies),
+
   // path to rollup.config.js used to transform the code
   rollupConfig: `${__dirname}/rollup.config.js`,
 

@@ -22,6 +22,9 @@ function bundle(opts) {
   // entry point of our app, panels needs this to require it
   b.require(opts.entry, {expose: opts.expose});
 
+  // expose the app dependencies
+  b.require(opts.requires);
+
   // rollupify the bundle
   b.transform(rollupify, {config: opts.rollupConfig});
 
@@ -113,6 +116,9 @@ function watch(opts) {
 
   // entry point of our app, panels needs this to require it
   b.require(opts.entry, {expose: opts.expose});
+
+  // expose the app dependencies
+  b.require(opts.requires);
 
   // rollupify the bundle
   b.transform(rollupify, {config: opts.rollupConfig});
