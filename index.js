@@ -22,7 +22,7 @@ const defaultOpts = {
   entry: `${path}/${pkg.main}`,
 
   // dependencies that panels already bundles for us and we can safely declare as externals
-  externals: Object.keys(require('./node_modules/panels/package.json').dependencies),
+  externals: Object.keys(require('panels/package.json').dependencies),
 
   // the app's name that panels will call it after, generally its the domain where it runs
   expose: pkg.name,

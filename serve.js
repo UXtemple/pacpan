@@ -4,8 +4,8 @@ const http = require('http');
 const fs = require('fs');
 const send = require('send');
 
-const panelsVersion = require('./node_modules/panels/package.json').version;
-const panelsFile = `${__dirname}/node_modules/panels/bundle/panels-${panelsVersion}.js`;
+const panelsVersion = require('panels/package.json').version;
+const panelsFile = require.resolve(`panels/bundle/panels-${panelsVersion}.js`;
 const panelsJsonFile = `${__dirname}/panels.json`;
 const playgroundFile = `${__dirname}/playground.html`;
 
