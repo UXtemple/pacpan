@@ -15,11 +15,12 @@ function bundle(opts) {
 
   const b = browserify({
     debug: true,
+    entries: [opts.entry],
     plugin: [errorify]
   });
 
   // entry point of our app, panels needs this to require it
-  b.require(opts.entry, {entry: true, expose: opts.expose});
+  b.require(opts.entry, {expose: opts.expose});
 
   // rollupify the bundle
   b.transform(rollupify, {config: opts.rollupConfig});
@@ -105,12 +106,13 @@ function watch(opts) {
   const b = browserify({
     cache: {},
     debug: true,
+    entries: [opts.entry],
     packageCache: {},
     plugin: [errorify, watchify]
   });
 
   // entry point of our app, panels needs this to require it
-  b.require(opts.entry, {entry: true, expose: opts.expose});
+  b.require(opts.entry, {expose: opts.expose});
 
   // rollupify the bundle
   b.transform(rollupify, {config: opts.rollupConfig});
