@@ -5,7 +5,7 @@ const fs = require('fs');
 const send = require('send');
 
 const panelsVersion = require('panels/package.json').version;
-const panelsFile = require.resolve(`panels/bundle/panels-${panelsVersion}.js`;
+const panelsFile = require.resolve(`panels/bundle/panels-${panelsVersion}.js`);
 const panelsJsonFile = `${__dirname}/panels.json`;
 const playgroundFile = `${__dirname}/playground.html`;
 
