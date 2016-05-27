@@ -20,11 +20,13 @@
     "errorify": "^0.3.1",
     "exorcist": "^0.4.0",
     "mkdirp": "^0.5.1",
-    "panels": "^6.1.0",
     "rollup-plugin-babel": "^2.4.0",
     "rollupify": "^0.2.0",
     "send": "^0.13.2",
     "uglify-js": "^2.6.2",
     "watchify": "^3.7.0"
+  },
+  "peerDependencies": {
+    "panels": "^7.0.0"
   }
 }
