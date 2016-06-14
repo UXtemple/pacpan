@@ -22,7 +22,7 @@ const defaultOpts = {
   entry: `${path}/${pkg.main}`,
 
   // dependencies that panels already bundles for us and we can safely declare as externals
-  externals: Object.keys(require('panels/package.json').dependencies).concat('redux-promise'),
+  externals: Object.keys(require('../panels/package.json').dependencies).concat('redux-promise'),
 
   // the app's name that panels will call it after, generally its the domain where it runs
   expose: pkg.name,
@@ -34,10 +34,13 @@ const defaultOpts = {
   port: 80,
 
   // expose your own requires for your own use too
-  requires: pkg.dependencies ? Object.keys(pkg.dependencies) : [],
+  requires: [], // pkg.dependencies ? Object.keys(pkg.dependencies) : [],
 
   // path to rollup.config.js used to transform the code
   rollupConfig: `${__dirname}/rollup.config.js`,
+
+  // list of path regexes to serve as regular files and not to try to render them as panels paths
+  serveAsIs: [],
 
   // path to the temporary bundle used when watching
   tmp: `${path}/panels.app.tmp.js`,

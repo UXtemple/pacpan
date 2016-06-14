@@ -4,10 +4,19 @@ const http = require('http');
 const fs = require('fs');
 const send = require('send');
 
-const panelsVersion = require('panels/package.json').version;
-const panelsFile = require.resolve(`panels/bundle/panels-${panelsVersion}.js`);
+const panelsVersion = require('../panels/package.json').version;
+const panelsFile = require.resolve(`../panels/bundle/panels-${panelsVersion}.js`);
 const panelsJsonFile = `${__dirname}/panels.json`;
 const playgroundFile = `${__dirname}/playground.html`;
+
+function isFile(file) {
+  try {
+    const stat = fs.statSync(file);
+    return stat.isFile();
+  } catch(err) {
+    return false;
+  }
+}
 
 module.exports = function serve(opts) {
   const s = http.createServer((req, res) => {
@@ -27,14 +36,18 @@ module.exports = function serve(opts) {
         // serve panels packaged app.js'
         file = opts.tmp;
 
-      } else if (fs.existsSync(assetFile)) {
-        // serve any files that may exist in assets
+      } else if (isFile(assetFile)) {
+        // serve static assets
         file = assetFile;
 
       } else if (req.url === '/panels.json') {
         // serve panels.json if it wasn't served from assets
         file = panelsJsonFile;
-
+      } else if (opts.serveAsIs.find(regex => regex.test(req.url))) {
+        // serve files that the user defined they want them like that
+        if (isFile(assetFile)) {
+          file = assetFile;
+        }
       } else {
         // catch all for index
         const customIndexFile = `${opts.assets}/index.html`;

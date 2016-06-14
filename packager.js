@@ -105,7 +105,7 @@ function watch(opts) {
 
   const b = browserify({
     cache: {},
-    debug: true,
+    // debug: true,
     entries: [opts.entry],
     packageCache: {},
     plugin: [errorify, watchify]
@@ -118,7 +118,7 @@ function watch(opts) {
   b.require(opts.requires);
 
   // rollupify the bundle
-  b.transform(rollupify, {config: opts.rollupConfig});
+  b.transform(rollupify, {config: opts.rollupConfig, sourceMaps: false});
 
   // declare our build's externals
   opts.externals.forEach(dep => b.external(dep));
