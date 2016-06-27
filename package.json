@@ -17,7 +17,7 @@
     "errorify": "^0.3.1",
     "exorcist": "^0.4.0",
     "mkdirp": "^0.5.1",
-    "rollup-plugin-babel": "^2.4.0",
+    "rollup-plugin-babel": "^2.6.1",
     "rollupify": "^0.3.2",
     "send": "^0.13.2",
     "uglify-js": "^2.6.2",
