@@ -5,8 +5,7 @@
   "bin": {
     "pacpan": "index.js"
   },
-  "scripts": {
-  },
+  "scripts": {},
   "author": "Darío Javier Cravero <dario@uxtemple.com>",
   "repository": "https://github.com/UXtemple/pacpan",
   "license": "MIT",
@@ -19,7 +18,7 @@
     "exorcist": "^0.4.0",
     "mkdirp": "^0.5.1",
     "rollup-plugin-babel": "^2.4.0",
-    "rollupify": "^0.3.1",
+    "rollupify": "^0.3.2",
     "send": "^0.13.2",
     "uglify-js": "^2.6.2",
     "watchify": "^3.7.0"
