@@ -20,7 +20,7 @@
     "rollup-plugin-babel": "^2.4.0",
     "rollupify": "^0.3.2",
     "send": "^0.13.2",
-    "uglify-js": "^2.6.2",
+    "uglify-js": "^2.6.4",
     "watchify": "^3.7.0"
   },
   "peerDependencies": {
