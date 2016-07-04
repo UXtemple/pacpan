@@ -83,7 +83,6 @@ function bundle(opts) {
 
     out.write(json);
     out.end();
-
   }
 
   b.bundle()

@@ -27,11 +27,11 @@ const defaultOpts = {
   // the app's name that panels will call it after, generally its the domain where it runs
   expose: pkg.name,
 
+  // the domain to run on, defaults to the package name
+  domain: pkg.name,
+
   // host to run the dev server at
   host: '0.0.0.0',
-
-  // port to run the dev server at
-  port: 80,
 
   // expose your own requires for your own use too
   requires: [], // pkg.dependencies ? Object.keys(pkg.dependencies) : [],

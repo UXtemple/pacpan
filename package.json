@@ -16,14 +16,17 @@
     "browserify": "^13.0.0",
     "errorify": "^0.3.1",
     "exorcist": "^0.4.0",
+    "http2": "^3.3.4",
     "mkdirp": "^0.5.1",
+    "pem": "^1.8.3",
     "rollup-plugin-babel": "^2.4.0",
+    "rollup-plugin-replace": "^1.1.1",
     "rollupify": "^0.3.2",
     "send": "^0.13.2",
     "uglify-js": "^2.6.2",
     "watchify": "^3.7.0"
   },
   "peerDependencies": {
-    "panels": "^7.0.0"
+    "panels": "^8.0.0"
   }
 }
