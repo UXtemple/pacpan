@@ -10,7 +10,7 @@ const send = require('send');
 const panelsVersion = require('../panels/package.json').version;
 const panelsFile = require.resolve(`../panels/bundle/panels-${panelsVersion}.js`);
 // TODO abstract, bundle, etc. (in panels)
-const panelsWorkerFile = require.resolve(`../panels/playground/panels-worker.js`);
+const panelsWorkerFile = require.resolve(`../panels/bundle/panels-worker.js`);
 const panelsJsonFile = `${__dirname}/panels.json`;
 const playgroundFile = `${__dirname}/playground.html`;
 
