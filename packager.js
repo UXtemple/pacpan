@@ -1,9 +1,10 @@
 'use strict';
 
 const browserify = require('browserify');
-const errorify = require('errorify');
+const chalk = require('chalk');
 const fs = require('fs');
 const rollupify = require('rollupify');
+const watchify = require('watchify');
 
 function bundle(opts) {
   const exorcist = require('exorcist');
@@ -15,8 +16,7 @@ function bundle(opts) {
 
   const b = browserify({
     debug: true,
-    entries: [opts.entry],
-    plugin: [errorify]
+    entries: [opts.entry]
   });
 
   // entry point of our app, panels needs this to require it
@@ -99,15 +99,14 @@ function bundle(opts) {
     });
 }
 
+let watchError;
 function watch(opts) {
-  const watchify = require('watchify');
-
   const b = browserify({
     cache: {},
     // debug: true,
     entries: [opts.entry],
     packageCache: {},
-    plugin: [errorify, watchify]
+    plugin: [watchify]
   });
 
   // entry point of our app, panels needs this to require it
@@ -129,7 +128,29 @@ function watch(opts) {
   bundle();
 
   b.on('update', bundle);
-  b.on('bytes', bytes => console.log(`${bytes} bytes written`));
+  b.on('log', console.log.bind(console));
+  b.on('bundle', theBundle => {
+    theBundle.on('error', error => {
+      if (watchError !== error.stack) {
+        if (error.codeFrame) {
+          console.error(chalk.red(`${error.constructor.name} at ${error.id}`));
+          console.error(error.codeFrame);
+        } else {
+          const match = error.stack.match(/Error: Could not resolve (.+?) from (.+?) while/);
+          if (match) {
+            console.error(chalk.red(`ImportError at ${match[2]}`));
+            console.error('Does', chalk.blue(match[1]), 'exist? Check that import statement.');
+          } else {
+            console.error(error.stack);
+          }
+        }
+        watchError = error.stack;
+      }
+      b.removeAllListeners();
+      b.close();
+      setTimeout(() => watch(opts), 1000);
+    });
+  });
 
   return function cleanup() {
     try {
