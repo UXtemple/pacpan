@@ -2,7 +2,7 @@
 
 const child_process = require('child_process');
 const http = require('http');
-const http2 = require('http2');
+const https = require('https');
 const fs = require('fs');
 const pem = require('pem');
 const send = require('send');
@@ -37,7 +37,7 @@ module.exports = function serve(opts) {
       child_process.execSync(`security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" ${CRT}`);
       fs.unlinkSync(CRT);
 
-      const s = http2.createServer({key: keys.serviceKey, cert: keys.certificate}, (req, res) => {
+      const s = https.createServer({key: keys.serviceKey, cert: keys.certificate}, (req, res) => {
         try {
           const assetFile = `${opts.assets}${req.url}`;
           let file;
@@ -89,6 +89,8 @@ module.exports = function serve(opts) {
         if (error && error.code === 'EACCES') {
           console.error(`Can't use port ${opts.port} to run your app. Try running "sudo pacpan" instead`);
           process.exit();
+        } else {
+          console.error(error);
         }
       });
 
