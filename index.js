@@ -11,7 +11,11 @@ const command = process.argv[2];
 
 // tell the mode we're working on
 if (command === 'bundle') {
-  packager.bundle(opts);
+  const apps = (
+    process.argv[3] ? process.argv.slice(3, process.argv.length) : [process.cwd()]
+  ).map(getConfig);
+
+  apps.forEach(packager.bundle);
 } else if (command === 'help') {
   console.log(`
 Pacpan helps you package and run panels apps with as little configuration as needed.
