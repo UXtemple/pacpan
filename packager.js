@@ -35,7 +35,7 @@ function bundle(opts) {
   mkdirp.sync(opts.bundle);
 
   // determine the bundle's full path
-  const out = `${opts.expose}-${opts.version}`;
+  const out = `${opts.expose.replace(/[@\/]/g, '')}-${opts.version}`;
 
   const outJs = `${out}.js`;
   const outJsMap = `${outJs}.map`;
