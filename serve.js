@@ -1,18 +1,35 @@
 'use strict';
 
+const { parse } = require('url');
 const child_process = require('child_process');
+const denodeify = require('denodeify');
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const pem = require('pem');
 const send = require('send');
+const tls = require('tls');
 
-const panelsVersion = require('../panels/package.json').version;
-const panelsFile = require.resolve(`../panels/bundle/panels-${panelsVersion}.js`);
-// TODO abstract, bundle, etc. (in panels)
-const panelsWorkerFile = require.resolve(`../panels/bundle/panels-worker.js`);
+const createCSR = denodeify(pem.createCSR);
+const createCertificate = denodeify(pem.createCertificate);
+
+const panelsVersion = require('panels/package.json').version;
+const panelsJs = require.resolve(`../panels/bundle/panels-${panelsVersion}.js`);
 const panelsJsonFile = `${__dirname}/panels.json`;
 const playgroundFile = `${__dirname}/playground.html`;
+
+const APPS = {};
+const FILES = {
+  // serve the panels runtime
+  '/panels.js': panelsJs,
+  // serve panels.json if it wasn't served from assets
+  '/panels.json': panelsJsonFile,
+  // serve the panels worker
+  '/panels-worker.js': require.resolve(`../panels/bundle/panels-worker.js`),
+  // serve the panels runtime source map
+  [`/panels-${panelsVersion}.js.map`]: `${panelsJs}.map`
+};
+const HOST = '0.0.0.0';
 
 function isFile(file) {
   try {
@@ -23,85 +40,95 @@ function isFile(file) {
   }
 }
 
-const CRT = `${process.cwd()}/.crt.tmp`;
-
-module.exports = function serve(opts) {
+function secure(app) {
   try {
-    child_process.execSync(`security delete-certificate -c ${opts.domain}`);
+    child_process.execSync(`security delete-certificate -c ${app.domain}`, { silent: true });
   } catch (err) {
   }
+  return createCSR({ commonName: app.domain })
+    .then(sig =>
+      createCertificate({
+        clientKey: sig.clientKey,
+        csr: sig.csr,
+        days: 30,
+        selfSigned: true
+      })
+    ).then(keys => {
+      const tmp = `${process.cwd()}/.${app.domain}.crt.tmp`;
+      fs.writeFileSync(tmp, keys.certificate);
+      child_process.execSync(`security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" ${tmp}`);
+      fs.unlinkSync(tmp);
 
-  pem.createCSR({ commonName: opts.domain }, (err, sig) => {
-    pem.createCertificate({ clientKey: sig.clientKey, csr: sig.csr, days: 30, selfSigned: true }, (err, keys) => {
-      fs.writeFileSync(CRT, keys.certificate);
-      child_process.execSync(`security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" ${CRT}`);
-      fs.unlinkSync(CRT);
-
-      const s = https.createServer({key: keys.serviceKey, cert: keys.certificate}, (req, res) => {
-        try {
-          const assetFile = `${opts.assets}${req.url}`;
-          let file;
-
-          if (req.url === '/panels.js') {
-            // serve the panels runtime
-            file = panelsFile;
-
-          } else if (req.url === '/panels-worker.js') {
-            // serve the panels worker
-            file = panelsWorkerFile;
-
-          } else if (req.url === `/panels-${panelsVersion}.js.map`) {
-            // serve the panels runtime source map
-            file = `${panelsFile}.map`;
-
-          } else if (req.url === '/app.js') {
-            // serve panels packaged app.js'
-            file = opts.tmp;
-
-          } else if (isFile(assetFile)) {
-            // serve static assets
-            file = assetFile;
-
-          } else if (req.url === '/panels.json') {
-            // serve panels.json if it wasn't served from assets
-            file = panelsJsonFile;
-          } else if (opts.serveAsIs.find(regex => regex.test(req.url))) {
-            // serve files that the user defined they want them like that
-            if (isFile(assetFile)) {
-              file = assetFile;
-            }
-          } else {
-            // catch all for index
-            const customIndexFile = `${opts.assets}/index.html`;
-
-            file = fs.existsSync(customIndexFile) ? customIndexFile : playgroundFile;
-          }
-
-          send(req, file).pipe(res);
-        } catch(err) {
-          console.error('err', err)
-        }
-      });
-
-      s.listen(443, opts.host);
-
-      s.on('error', error => {
-        if (error && error.code === 'EACCES') {
-          console.error(`Can't use port ${opts.port} to run your app. Try running "sudo pacpan" instead`);
-          process.exit();
-        } else {
-          console.error(error);
-        }
-      });
-
-      s.on('listening', () => {
-        console.log(`pacpan is running at https://${opts.domain}`);
-      });
-
-      http.createServer((req, res) => {
-        res.writeHead(301, { Location: `https://${opts.domain}` })
-        res.end();
-      }).listen(80, opts.host);
+      APPS[app.domain] = {
+        app,
+        ctx: tls.createSecureContext({
+          cert: keys.certificate,
+          key: keys.serviceKey
+        })
+      };
     });
+}
+
+module.exports = function serve(apps) {
+  Promise.all(apps.map(secure)).then(() => {
+    const s = https.createServer({
+      SNICallback(domain, cb) {
+        cb(null, APPS[domain].ctx);
+      }
+    }, (req, res) => {
+      try {
+        const { app } = APPS[req.headers.host];
+        const { pathname } = parse(req.url);
+        const assetFile = `${app.assets}${pathname}`;
+        let file;
+
+        if (pathname === '/app.js') {
+          // serve panels packaged app.js'
+          file = app.tmp;
+        } else if (isFile(assetFile)) {
+          // serve static assets
+          file = assetFile;
+        } else if (FILES[pathname]) {
+          file = FILES[pathname];
+        } else if (app.serveAsIs.find(regex => regex.test(pathname))) {
+          // serve files that the user defined they want them like that
+          if (isFile(assetFile)) {
+            file = assetFile;
+          }
+        } else {
+          // catch all for index
+          const customIndexFile = `${app.assets}/index.html`;
+
+          file = fs.existsSync(customIndexFile) ? customIndexFile : playgroundFile;
+        }
+
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+        send(req, file).pipe(res);
+      } catch(err) {
+        res.writeHead(404);
+        res.end();
+      }
+    });
+
+    s.listen(443, HOST);
+
+    s.on('error', error => {
+      if (error && error.code === 'EACCES') {
+        console.error(`Pacpan uses port 80 and 443, it seems that you tried running it without enough permissions. Try "sudo pacpan" instead.`);
+        process.exit();
+      } else {
+        console.error(error);
+      }
+    });
+
+    s.on('listening', () => {
+      console.log('pacpan running at:\n', apps.map(app => `https://${app.domain}`).join('\n'));
+    });
+
+    http.createServer((req, res) => {
+      res.writeHead(301, { Location: `https://${req.headers.host}` })
+      res.end();
+    }).listen(80, HOST);
   });
 }
