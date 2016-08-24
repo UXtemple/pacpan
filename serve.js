@@ -14,7 +14,7 @@ const createCSR = denodeify(pem.createCSR);
 const createCertificate = denodeify(pem.createCertificate);
 
 const panelsVersion = require('panels/package.json').version;
-const panelsJs = require.resolve(`../panels/bundle/panels-${panelsVersion}.js`);
+const panelsJs = require.resolve(`panels/bundle/panels-${panelsVersion}.js`);
 const panelsJsonFile = `${__dirname}/panels.json`;
 const playgroundFile = `${__dirname}/playground.html`;
 
@@ -25,7 +25,7 @@ const FILES = {
   // serve panels.json if it wasn't served from assets
   '/panels.json': panelsJsonFile,
   // serve the panels worker
-  '/panels-worker.js': require.resolve(`../panels/bundle/panels-worker.js`),
+  '/panels-worker.js': require.resolve('panels/bundle/panels-worker.js'),
   // serve the panels runtime source map
   [`/panels-${panelsVersion}.js.map`]: `${panelsJs}.map`
 };

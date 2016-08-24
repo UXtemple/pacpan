@@ -6,6 +6,7 @@ module.exports = function getConfig(raw) {
 
   const configFile = `${path}/.panels.js`;
   const pkg = require(`${path}/package.json`);
+  const rollupConfig = require(`${__dirname}/rollup.config.js`)(path)
   const version = pkg.version || 'dev';
 
   const defaultOpts = {
@@ -20,8 +21,8 @@ module.exports = function getConfig(raw) {
 
     // dependencies that panels already bundles for us and we can safely declare as externals
     externals: Object.keys(
-        require(`${__dirname}/../panels/package.json`).dependencies
-      ).concat('redux-promise'),
+      require('panels/package.json').dependencies
+    ).concat('redux-promise'),
 
     // the app's name that panels will call it after, generally its the domain where it runs
     expose: pkg.name,
@@ -36,7 +37,7 @@ module.exports = function getConfig(raw) {
     requires: [], // pkg.dependencies ? Object.keys(pkg.dependencies) : [],
 
     // path to rollup.config.js used to transform the code
-    rollupConfig: `${__dirname}/rollup.config.js`,
+    rollupConfig,
 
     // list of path regexes to serve as regular files and not to try to render them as panels paths
     serveAsIs: [],
