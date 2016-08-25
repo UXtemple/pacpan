@@ -76,39 +76,42 @@ module.exports = function serve(apps) {
         cb(null, APPS[domain].ctx);
       }
     }, (req, res) => {
-      try {
-        const { app } = APPS[req.headers.host];
-        const { pathname } = parse(req.url);
-        const assetFile = `${app.assets}${pathname}`;
-        let file;
+      const { app } = APPS[req.headers.host];
 
-        if (pathname === '/app.js') {
-          // serve panels packaged app.js'
-          file = app.tmp;
-        } else if (isFile(assetFile)) {
-          // serve static assets
-          file = assetFile;
-        } else if (FILES[pathname]) {
-          file = FILES[pathname];
-        } else if (app.serveAsIs.find(regex => regex.test(pathname))) {
-          // serve files that the user defined they want them like that
-          if (isFile(assetFile)) {
+      app.handler(req, res, () => {
+        try {
+          const { pathname } = parse(req.url);
+          const assetFile = `${app.assets}${pathname}`;
+          let file;
+
+          if (pathname === '/app.js') {
+            // serve panels packaged app.js'
+            file = app.tmp;
+          } else if (isFile(assetFile)) {
+            // serve static assets
             file = assetFile;
+          } else if (FILES[pathname]) {
+            file = FILES[pathname];
+          } else if (app.serveAsIs.find(regex => regex.test(pathname))) {
+            // serve files that the user defined they want them like that
+            if (isFile(assetFile)) {
+              file = assetFile;
+            }
+          } else {
+            // catch all for index
+            const customIndexFile = `${app.assets}/index.html`;
+
+            file = fs.existsSync(customIndexFile) ? customIndexFile : playgroundFile;
           }
-        } else {
-          // catch all for index
-          const customIndexFile = `${app.assets}/index.html`;
 
-          file = fs.existsSync(customIndexFile) ? customIndexFile : playgroundFile;
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+          send(req, file).pipe(res);
+        } catch(err) {
+          res.writeHead(404);
+          res.end();
         }
-
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-        send(req, file).pipe(res);
-      } catch(err) {
-        res.writeHead(404);
-        res.end();
-      }
+      })
     });
 
     s.listen(443, HOST);

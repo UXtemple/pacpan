@@ -30,6 +30,9 @@ module.exports = function getConfig(raw) {
     // the domain to run on, defaults to the package name
     domain: pkg.name,
 
+    // web handler for specific requests in dev mode
+    handler: (req, res, next) => next(),
+
     // host to run the dev server at
     host: '0.0.0.0',
 
