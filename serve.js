@@ -1,6 +1,7 @@
 'use strict';
 
 const { parse } = require('url');
+const chalk = require('chalk');
 const child_process = require('child_process');
 const denodeify = require('denodeify');
 const http = require('http');
@@ -126,7 +127,8 @@ module.exports = function serve(apps) {
     });
 
     s.on('listening', () => {
-      console.log('pacpan running at:\n', apps.map(app => `https://${app.domain}`).join('\n'));
+      console.log(chalk.green('pacpan is running at:'))
+      console.log(apps.map(app => `https://${app.domain}`).join('\n'));
     });
 
     http.createServer((req, res) => {

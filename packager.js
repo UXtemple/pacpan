@@ -8,10 +8,11 @@ const watchify = require('watchify');
 
 function bundle(opts) {
   const exorcist = require('exorcist');
+  const domain = chalk.dim(`[${opts.domain}]`);
   const mkdirp = require('mkdirp');
   const uglifyJs = require('uglify-js');
 
-  console.log(`PacPan is getting your Panels app "${opts.expose}" ready to go :)`);
+  console.log(domain, `PacPan is getting your Panels app "${opts.expose}" ready to go :)`);
   console.time('pacpan-bundle');
 
   const b = browserify({
@@ -70,7 +71,7 @@ function bundle(opts) {
     const html = fs.readFileSync(`${__dirname}/playground.html`).toString()
       .replace(
         '<script src=/panels.js></script>\n',
-        `<script src=/${outJsMin}></script>\<script src=https://cdn.uxtemple.com/panels.js></script>\n`
+        `<script src=/${outJsMin}></script>\n<script src=https://cdn.uxtemple.com/panels.js></script>\n`
       );
 
     out.write(html, () => out.end());
@@ -94,7 +95,7 @@ function bundle(opts) {
       buildPanelsJson();
 
       console.timeEnd('pacpan-bundle');
-      console.log(`PacPan just finished. Your bundle is at ${opts.bundle}:`);
+      console.log(domain, `PacPan just finished. Your bundle is at ${opts.bundle}:`);
       console.log(fs.readdirSync(opts.bundle).join(', '));
     });
 }
@@ -108,6 +109,8 @@ function watch(opts) {
     packageCache: {},
     plugin: [watchify]
   });
+
+  const domain = chalk.dim(`[${opts.domain}]`);
 
   // entry point of our app, panels needs this to require it
   b.require(opts.entry, {expose: opts.expose});
@@ -128,20 +131,23 @@ function watch(opts) {
   bundle();
 
   b.on('update', bundle);
-  b.on('log', console.log.bind(console));
+  b.on('log', msg => {
+    console.log(domain, msg)
+  });
+
   b.on('bundle', theBundle => {
     theBundle.on('error', error => {
       if (watchError !== error.stack) {
         if (error.codeFrame) {
-          console.error(chalk.red(`${error.constructor.name} at ${error.id}`));
-          console.error(error.codeFrame);
+          console.error(domain, chalk.red(`${error.constructor.name} at ${error.id}`));
+          console.error(domain, error.codeFrame);
         } else {
           const match = error.stack.match(/Error: Could not resolve (.+?) from (.+?) while/);
           if (match) {
-            console.error(chalk.red(`ImportError at ${match[2]}`));
-            console.error('Does', chalk.blue(match[1]), 'exist? Check that import statement.');
+            console.error(domain, chalk.red(`ImportError at ${match[2]}`));
+            console.error(domain, 'Does', chalk.blue(match[1]), 'exist? Check that import statement.');
           } else {
-            console.error(error.stack);
+            console.error(domain, error.stack);
           }
         }
         watchError = error.stack;

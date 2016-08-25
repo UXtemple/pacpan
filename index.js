@@ -1,6 +1,7 @@
 #! /usr/bin/env node
 'use strict';
 
+const chalk = require('chalk');
 const getConfig = require('./get-config');
 const packager = require('./packager');
 const serve = require('./serve');
@@ -31,8 +32,10 @@ Notice the first ".", it means that you want to target this directory as an app 
     process.argv[2] ? process.argv.slice(2, process.argv.length) : [process.cwd()]
   ).map(getConfig);
 
-  const watchers = apps.map(packager.watch);
+  console.log(chalk.blue('Welcome PacPan! The Panels applications packager'))
+
   serve(apps);
+  const watchers = apps.map(packager.watch);
 
   const cleanup = () => watchers.forEach(w => w());
 
