@@ -25,8 +25,6 @@ const FILES = {
   '/panels.js': panelsJs,
   // serve panels.json if it wasn't served from assets
   '/panels.json': panelsJsonFile,
-  // serve the panels worker
-  '/panels-worker.js': require.resolve('panels/bundle/panels-worker.js'),
   // serve the panels runtime source map
   [`/panels-${panelsVersion}.js.map`]: `${panelsJs}.map`
 };
