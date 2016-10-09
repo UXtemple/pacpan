@@ -68,7 +68,7 @@ function secure(app) {
     });
 }
 
-module.exports = function serve(apps) {
+function serve(apps) {
   Promise.all(apps.map(secure)).then(() => {
     const s = https.createServer({
       SNICallback(domain, cb) {
@@ -77,40 +77,8 @@ module.exports = function serve(apps) {
     }, (req, res) => {
       const { app } = APPS[req.headers.host];
 
-      app.handler(req, res, () => {
-        try {
-          const { pathname } = parse(req.url);
-          const assetFile = `${app.assets}${pathname}`;
-          let file;
-
-          if (pathname === '/app.js') {
-            // serve panels packaged app.js'
-            file = app.tmp;
-          } else if (isFile(assetFile)) {
-            // serve static assets
-            file = assetFile;
-          } else if (FILES[pathname]) {
-            file = FILES[pathname];
-          } else if (app.serveAsIs.find(regex => regex.test(pathname))) {
-            // serve files that the user defined they want them like that
-            if (isFile(assetFile)) {
-              file = assetFile;
-            }
-          } else {
-            // catch all for index
-            const customIndexFile = `${app.assets}/index.html`;
-
-            file = fs.existsSync(customIndexFile) ? customIndexFile : playgroundFile;
-          }
-
-          res.setHeader('Access-Control-Allow-Origin', '*');
-          res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-          send(req, file).pipe(res);
-        } catch(err) {
-          res.writeHead(404);
-          res.end();
-        }
-      })
+      const handler = createHandler(app)
+      app.handler(req, res, () => handler(req, res))
     });
 
     s.listen(443, HOST);
@@ -134,4 +102,44 @@ module.exports = function serve(apps) {
       res.end();
     }).listen(80, HOST);
   });
+}
+
+const createHandler = app => (req, res) => {
+  try {
+    const { pathname } = parse(req.url);
+    const assetFile = `${app.assets}${pathname}`;
+    let file;
+
+    if (pathname === '/app.js') {
+      // serve panels packaged app.js'
+      file = app.tmp;
+    } else if (isFile(assetFile)) {
+      // serve static assets
+      file = assetFile;
+    } else if (FILES[pathname]) {
+      file = FILES[pathname];
+    } else if (app.serveAsIs.find(regex => regex.test(pathname))) {
+      // serve files that the user defined they want them like that
+      if (isFile(assetFile)) {
+        file = assetFile;
+      }
+    } else {
+      // catch all for index
+      const customIndexFile = `${app.assets}/index.html`;
+
+      file = fs.existsSync(customIndexFile) ? customIndexFile : playgroundFile;
+    }
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    send(req, file).pipe(res);
+  } catch(err) {
+    res.writeHead(404);
+    res.end();
+  }
+}
+
+module.exports = {
+  createHandler,
+  serve
 }

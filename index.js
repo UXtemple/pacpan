@@ -4,7 +4,7 @@
 const chalk = require('chalk');
 const getConfig = require('./get-config');
 const packager = require('./packager');
-const serve = require('./serve');
+const { serve } = require('./serve');
 
 process.on('uncaughtException', err => console.error(`Uncaught exception: ${err.stack}`));
 
