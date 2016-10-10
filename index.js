@@ -1,45 +1,48 @@
-#! /usr/bin/env node
-'use strict';
+#!/usr/bin/env node
 
-const chalk = require('chalk');
-const getConfig = require('./get-config');
-const packager = require('./packager');
-const { serve } = require('./serve');
+import bundle from './bundle'
+import chalk from 'chalk'
+import getConfig from './get-config'
+import HELP from './help'
+import isSudo from 'is-sudo'
+import serve from './serve'
+import watch from './watch'
 
-process.on('uncaughtException', err => console.error(`Uncaught exception: ${err.stack}`));
+process.on('uncaughtException', err => {
+  console.error('Uncaught exception:', err.stack)
+})
 
-const command = process.argv[2];
+const getApps = () => (
+  process.argv[3] ? process.argv.slice(3, process.argv.length) : [process.cwd()]
+).map(getConfig)
 
-// tell the mode we're working on
-if (command === 'bundle') {
-  const apps = (
-    process.argv[3] ? process.argv.slice(3, process.argv.length) : [process.cwd()]
-  ).map(getConfig);
+switch(process.argv[2]) {
+case 'bundle':
+  getApps().forEach(bundle)
+  break
 
-  apps.forEach(packager.bundle);
-} else if (command === 'help') {
-  console.log(`
-Pacpan helps you package and run panels apps with as little configuration as needed.
+case 'start':
+  isSudo(is => {
+    if (!is) {
+      console.error(chalk.red(`Please run "sudo ${process.argv.join(' ')}" instead`))
+      return
+    }
 
-Development is the default mode of operation. It is what happens when you run "pacpan".
+    console.log(chalk.blue('PacPan is starting'))
+    console.log(chalk.gray('To exit it, press ctrl+c'))
+    const apps = getApps()
+    serve(apps)
+    const watchers = apps.map(watch)
+    const cleanup = () => watchers.forEach(w => w())
 
-You can target multiple apps at once, just run: "pacpan . ../path/to/another/app".
-Notice the first ".", it means that you want to target this directory as an app too.
+    // clean up the temp file on exit and ctrl+c event
+    process.on('exit', cleanup)
+    process.on('SIGINT', cleanup)
+  })
+  break
 
-"pacpan bundle" bundles the assets for you.`);
-} else {
-  const apps = (
-    process.argv[2] ? process.argv.slice(2, process.argv.length) : [process.cwd()]
-  ).map(getConfig);
-
-  console.log(chalk.blue('Welcome PacPan! The Panels applications packager'))
-
-  serve(apps);
-  const watchers = apps.map(packager.watch);
-
-  const cleanup = () => watchers.forEach(w => w());
-
-  // clean up the temp file on exit and ctrl+c event
-  process.on('exit', cleanup);
-  process.on('SIGINT', cleanup);
+case 'help':
+default:
+  console.log(HELP)
+  break
 }

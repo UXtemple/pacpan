@@ -1,14 +1,14 @@
-const babel = require('rollup-plugin-babel');
-const replace = require('rollup-plugin-replace');
+const babel = require('rollup-plugin-babel')
+const replace = require('rollup-plugin-replace')
 
 const external = Object.keys(
-  require(`${__dirname}/../panels/package.json`).dependencies
+  require('panels/package.json').dependencies
 ).concat('redux-promise')
 
 module.exports = path => ({
   onwarn(str) {
     if (!/^Treating/.test(str)) {
-      console.error(str);
+      console.error(str)
     }
   },
   external: external.concat(Object.keys(

@@ -1,17 +1,17 @@
-const { resolve } = require('path');
-const fs = require('fs');
+import { resolve } from 'path'
+import fs from 'fs'
 
-module.exports = function getConfig(raw) {
-  const path = resolve(raw);
+export default function getConfig(raw) {
+  const path = resolve(raw)
 
-  const configFile = `${path}/.panels.js`;
-  const pkg = require(`${path}/package.json`);
+  const configFile = `${path}/panels.config.js`
+  const pkg = require(`${path}/package.json`)
   const rollupConfig = require(`${__dirname}/rollup.config.js`)(path)
-  const version = pkg.version || 'dev';
+  const version = pkg.version || 'dev'
 
   const defaultOpts = {
     // static assets path to put your images, files, etc.
-    assets: `${path}/public`,
+    assets: `${path}/public/`,
 
     // the path to the bundleda pp
     bundle: `${path}/bundle/${version}`,
@@ -42,6 +42,11 @@ module.exports = function getConfig(raw) {
     // path to rollup.config.js used to transform the code
     rollupConfig,
 
+    // the root to run on in that domain
+    root: '/',
+
+    secure: false,
+
     // list of path regexes to serve as regular files and not to try to render them as panels paths
     serveAsIs: [],
 
@@ -50,10 +55,10 @@ module.exports = function getConfig(raw) {
 
     // the version we're working on
     version: version
-  };
+  }
 
 
   return fs.existsSync(configFile) ?
     Object.assign(defaultOpts, require(configFile)) :
-    defaultOpts;
+    defaultOpts
 }

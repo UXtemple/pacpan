@@ -1,145 +1,94 @@
-'use strict';
+import { createSecureContext } from 'tls'
+import chalk from 'chalk'
+import createHandler from './serve-handler'
+import fs from 'fs'
+import http from 'http'
+import https from 'https'
 
-const { parse } = require('url');
-const chalk = require('chalk');
-const child_process = require('child_process');
-const denodeify = require('denodeify');
-const http = require('http');
-const https = require('https');
-const fs = require('fs');
-const pem = require('pem');
-const send = require('send');
-const tls = require('tls');
+const HOST = '0.0.0.0'
 
-const createCSR = denodeify(pem.createCSR);
-const createCertificate = denodeify(pem.createCertificate);
-
-const panelsVersion = require('panels/package.json').version;
-const panelsJs = require.resolve(`panels/bundle/panels-${panelsVersion}.js`);
-const panelsJsonFile = `${__dirname}/panels.json`;
-const playgroundFile = `${__dirname}/playground.html`;
-
-const APPS = {};
-const FILES = {
-  // serve the panels runtime
-  '/panels.js': panelsJs,
-  // serve panels.json if it wasn't served from assets
-  '/panels.json': panelsJsonFile,
-  // serve the panels runtime source map
-  [`/panels-${panelsVersion}.js.map`]: `${panelsJs}.map`
-};
-const HOST = '0.0.0.0';
-
-function isFile(file) {
-  try {
-    const stat = fs.statSync(file);
-    return stat.isFile();
-  } catch(err) {
-    return false;
-  }
-}
-
-function secure(app) {
-  try {
-    child_process.execSync(`security delete-certificate -c ${app.domain}`, { silent: true });
-  } catch (err) {
-  }
-  return createCSR({ commonName: app.domain })
-    .then(sig =>
-      createCertificate({
-        clientKey: sig.clientKey,
-        csr: sig.csr,
-        days: 30,
-        selfSigned: true
+export default function serve(apps) {
+  const appsByRoot = {}
+  const roots = apps.map(app => {
+    const root = `${app.domain}${app.root}`
+    appsByRoot[root] = app
+    if (app.secure) {
+      app.secureContext = createSecureContext({
+        cert: fs.readFileSync(app.secure.cert),
+        key: fs.readFileSync(app.secure.key)
       })
-    ).then(keys => {
-      const tmp = `${process.cwd()}/.${app.domain}.crt.tmp`;
-      fs.writeFileSync(tmp, keys.certificate);
-      child_process.execSync(`security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" ${tmp}`);
-      fs.unlinkSync(tmp);
-
-      APPS[app.domain] = {
-        app,
-        ctx: tls.createSecureContext({
-          cert: keys.certificate,
-          key: keys.serviceKey
-        })
-      };
-    });
-}
-
-function serve(apps) {
-  Promise.all(apps.map(secure)).then(() => {
-    const s = https.createServer({
-      SNICallback(domain, cb) {
-        cb(null, APPS[domain].ctx);
-      }
-    }, (req, res) => {
-      const { app } = APPS[req.headers.host];
-
-      const handler = createHandler(app)
-      app.handler(req, res, () => handler(req, res))
-    });
-
-    s.listen(443, HOST);
-
-    s.on('error', error => {
-      if (error && error.code === 'EACCES') {
-        console.error(`Pacpan uses port 80 and 443, it seems that you tried running it without enough permissions. Try "sudo pacpan" instead.`);
-        process.exit();
-      } else {
-        console.error(error);
-      }
-    });
-
-    s.on('listening', () => {
-      console.log(chalk.green('pacpan is running at:'))
-      console.log(apps.map(app => `https://${app.domain}`).join('\n'));
-    });
-
-    http.createServer((req, res) => {
-      res.writeHead(301, { Location: `https://${req.headers.host}` })
-      res.end();
-    }).listen(80, HOST);
-  });
-}
-
-const createHandler = app => (req, res) => {
-  try {
-    const { pathname } = parse(req.url);
-    const assetFile = `${app.assets}${pathname}`;
-    let file;
-
-    if (pathname === '/app.js') {
-      // serve panels packaged app.js'
-      file = app.tmp;
-    } else if (isFile(assetFile)) {
-      // serve static assets
-      file = assetFile;
-    } else if (FILES[pathname]) {
-      file = FILES[pathname];
-    } else if (app.serveAsIs.find(regex => regex.test(pathname))) {
-      // serve files that the user defined they want them like that
-      if (isFile(assetFile)) {
-        file = assetFile;
-      }
-    } else {
-      // catch all for index
-      const customIndexFile = `${app.assets}/index.html`;
-
-      file = fs.existsSync(customIndexFile) ? customIndexFile : playgroundFile;
     }
+    return root
+  })
 
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    send(req, file).pipe(res);
-  } catch(err) {
-    res.writeHead(404);
-    res.end();
+  const findApp = req => {
+    const fullUrl = `${req.headers.host}${req.url}`
+    const root = roots.filter(r => fullUrl.indexOf(r.replace(/\/$/, '')) === 0).sort()[0]
+    return appsByRoot[root] || apps[0]
   }
-}
 
-module.exports = {
-  createHandler,
-  serve
+  let warnedAboutSecure = false
+
+  const SNICallback = (domain, cb) => {
+    try {
+      // any app on that domain will do as they should all have the same key/cert
+      const app = apps.find(a => a.domain === domain)
+
+      if (!app.secure && !warnedAboutSecure) {
+        warnedAboutSecure = true
+        setTimeout(() => warnedAboutSecure = false, 100)
+
+        console.log(chalk.red(`You tried to access ${domain} through https but we don't have its certificate and key.`),
+`Does the app's panels.config.js include a secure key like?:
+
+  secure: {
+    cert: '/path/to/file.cert',
+    key: '/path/to/file.key'
+  }
+
+If you don't care about https, you can always access http://${domain}`)
+      }
+
+      cb(null, app.secureContext)
+    } catch(err) {
+      console.log(chalk.red(domain), err)
+    }
+  }
+
+  const handler = (req, res) => {
+    const app = findApp(req)
+    app.handler(req, res, () => createHandler(app)(req, res))
+  }
+
+  const s = https.createServer({ SNICallback }, handler)
+  s.on('error', console.error.bind(console))
+  s.on('listening', () => {
+    const list = apps.filter(a => a.secure)
+    if (list.length) {
+      console.log(chalk.green('secure apps'))
+      console.log(list.map(app => `  https://${app.domain}${app.root}`).join('\n'))
+    }
+  })
+  s.listen(443, HOST)
+
+  const s2 = http.createServer((req, res) => {
+    const app = findApp(req)
+
+    if (app.secure) {
+      res.writeHead(302, { Location: `https://${req.headers.host}${app.root}` })
+      res.end()
+    } else {
+      handler(req, res)
+    }
+  })
+  s2.on('error', console.error.bind(console))
+  s2.on('listening', () => {
+    const list = apps.filter(a => !a.secure)
+
+    if (list.length) {
+      console.log(chalk.yellow('insecure apps'))
+      console.log(list.map(app => `  http://${app.domain}${app.root}`).join('\n'))
+    }
+  })
+  s2.listen(80, HOST)
 }
