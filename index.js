@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import bundle from './bundle'
 import chalk from 'chalk'
 import getConfig from './get-config'

@@ -87,9 +87,9 @@ export default function bundle(opts) {
     .pipe(exorcist(`${opts.bundle}/${outJsMap}`, outJsMap))
     .pipe(fs.createWriteStream(`${opts.bundle}/${outJs}`), 'utf8')
     .on('finish', () => {
-      minify()
-      buildIndexHtml()
-      buildPanelsJson()
+      // minify()
+      // buildIndexHtml()
+      // buildPanelsJson()
 
       console.timeEnd('pacpan-bundle')
       console.log(domain, `PacPan just finished. Your bundle is at ${opts.bundle}:`)

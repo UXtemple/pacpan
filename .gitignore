@@ -2,3 +2,4 @@ node_modules
 *.tmp
 *.log
 npm-shrinkwrap.json
+bin.js
