@@ -20,12 +20,18 @@ export default function getConfig(raw) {
     entry: `${path}/${pkg.main}`,
 
     // dependencies that panels already bundles for us and we can safely declare as externals
-    externals: Object.keys(
-      require('panels/package.json').dependencies
-    ).concat([
-      'redux-promise',
-      'panels'
-    ]),
+    externals: [
+      'react',
+      'react-dom',
+      'react-flip-move',
+      'panels',
+      'panels/blocks',
+      'panels/normalise-uri',
+      'panels/snap',
+      // legacy
+      'panels-ui',
+      'usepages-blocks'
+    ],
 
     // the app's name that panels will call it after, generally its the domain where it runs
     expose: pkg.name,

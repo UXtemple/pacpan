@@ -1,9 +1,18 @@
 const babel = require('rollup-plugin-babel')
 const replace = require('rollup-plugin-replace')
 
-const external = Object.keys(
-  require('panels/package.json').dependencies
-).concat('redux-promise')
+const external = [
+  'react',
+  'react-dom',
+  'react-flip-move',
+  'panels',
+  'panels/blocks',
+  'panels/normalise-uri',
+  'panels/snap',
+  // legacy
+  'panels-ui',
+  'usepages-blocks'
+]
 
 module.exports = path => ({
   onwarn(str) {
