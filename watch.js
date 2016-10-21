@@ -55,6 +55,8 @@ export default function watch(opts) {
           }
         }
         watchError = error.stack
+      } else {
+        console.error(domain, error)
       }
       b.removeAllListeners()
       b.close()
