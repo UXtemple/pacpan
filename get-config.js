@@ -23,14 +23,14 @@ export default function getConfig(raw) {
     externals: [
       'react',
       'react-dom',
-      'react-flip-move',
       'panels',
       'panels/blocks',
       'panels/normalise-uri',
       'panels/snap',
       // legacy
       'panels-ui',
-      'usepages-blocks'
+      'usepages-blocks',
+      'react-flip-move'
     ],
 
     // the app's name that panels will call it after, generally its the domain where it runs
