@@ -13,7 +13,7 @@
   "license": "MIT",
   "devDependencies": {},
   "dependencies": {
-    "babel-plugin-external-helpers": "^6.5.0",
+    "babel-plugin-external-helpers": "^6.18.0",
     "babel-preset-es-uxtemple": "^1.0.0",
     "browserify": "^13.0.0",
     "chalk": "^1.1.3",
