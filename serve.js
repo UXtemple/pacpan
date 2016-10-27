@@ -71,16 +71,7 @@ If you don't care about https, you can always access http://${domain}`)
   })
   s.listen(443, HOST)
 
-  const s2 = http.createServer((req, res) => {
-    const app = findApp(req)
-
-    if (app.secure) {
-      res.writeHead(302, { Location: `https://${req.headers.host}${app.root}` })
-      res.end()
-    } else {
-      handler(req, res)
-    }
-  })
+  const s2 = http.createServer(handler)
   s2.on('error', console.error.bind(console))
   s2.on('listening', () => {
     const list = apps.filter(a => !a.secure)
