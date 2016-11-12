@@ -65,7 +65,6 @@ If you don't care about https, you can always access http://${domain}`)
   s.on('listening', () => {
     const list = apps.filter(a => a.secure)
     if (list.length) {
-      console.log(chalk.green('secure apps'))
       console.log(list.map(app => `  https://${app.domain}${app.root}`).join('\n'))
     }
   })
@@ -74,12 +73,7 @@ If you don't care about https, you can always access http://${domain}`)
   const s2 = http.createServer(handler)
   s2.on('error', console.error.bind(console))
   s2.on('listening', () => {
-    const list = apps.filter(a => !a.secure)
-
-    if (list.length) {
-      console.log(chalk.yellow('insecure apps'))
-      console.log(list.map(app => `  http://${app.domain}${app.root}`).join('\n'))
-    }
+    console.log(apps.map(app => `  http://${app.domain}${app.root}`).join('\n'))
   })
   s2.listen(80, HOST)
 }

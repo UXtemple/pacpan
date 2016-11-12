@@ -16,7 +16,7 @@ const external = [
 
 module.exports = path => ({
   onwarn(str) {
-    if (!/^Treating/.test(str)) {
+    if (!/^Treating/.test(str) && !/The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten/.test(str)) {
       console.error(str)
     }
   },
