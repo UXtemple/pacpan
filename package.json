@@ -24,7 +24,7 @@
     "rollupify": "^0.3.4",
     "send": "^0.13.2",
     "uglify-js": "^2.6.2",
-    "watchify": "^3.7.0"
+    "watchify": "^3.9.0"
   },
   "peerDependencies": {
     "panels": "^9.0.0"
