@@ -27,7 +27,7 @@
     "watchify": "^3.7.0"
   },
   "peerDependencies": {
-    "panels": "^9.0.0"
+    "panels": "^9.0.30"
   },
   "version": "2.0.15"
 }
