@@ -2347,6 +2347,15 @@ rollupify@^0.3.9:
     rollup "^0.41.1"
     through2 "^2.0.1"
 
+rollupify@nolanlawson/rollupify#rollup-0.43:
+  version "0.3.9"
+  resolved "https://codeload.github.com/nolanlawson/rollupify/tar.gz/83c5675571ee4b4a43ae658bce57027c2f59d178"
+  dependencies:
+    denodeify "^1.2.1"
+    noop-fn "^1.0.0"
+    rollup "^0.43.0"
+    through2 "^2.0.1"
+
 safe-buffer@^5.0.1, safe-buffer@~5.0.1:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/safe-buffer/-/safe-buffer-5.0.1.tgz#d263ca54696cd8a306b5ca6551e92de57918fbe7"
