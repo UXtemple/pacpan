@@ -23,14 +23,13 @@ export default function getConfig(raw) {
     externals: [
       'react',
       'react-dom',
+      'prop-types',
       'panels',
       'panels/blocks',
       'panels/normalise-uri',
       'panels/snap',
       // legacy
       'panels-ui',
-      'usepages-blocks',
-      'react-flip-move'
     ],
 
     // the app's name that panels will call it after, generally its the domain where it runs
@@ -63,11 +62,10 @@ export default function getConfig(raw) {
     tmp: `${path}/panels.app.tmp.js`,
 
     // the version we're working on
-    version: version
+    version: version,
   }
 
-
-  return fs.existsSync(configFile) ?
-    Object.assign(defaultOpts, require(configFile)) :
-    defaultOpts
+  return fs.existsSync(configFile)
+    ? Object.assign(defaultOpts, require(configFile))
+    : defaultOpts
 }
